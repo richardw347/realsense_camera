@@ -82,6 +82,8 @@ std::string		useDeviceSerialNum;
 
 unsigned char *rgb_frame_buffer = NULL;
 unsigned char *depth_frame_buffer = NULL;
+unsigned short *depth_frame_buffer_mm = NULL;
+float *depth_frame_buffer_m = NULL;
 #ifdef V4L2_PIX_FMT_INZI
 unsigned char *ir_frame_buffer = NULL;
 #endif
@@ -289,10 +291,10 @@ pubRealSenseDepthImageMsg(cv::Mat& depth_mat)
 	depth_img->width = depth_mat.cols;
 	depth_img->height = depth_mat.rows;
 
-	depth_img->encoding = sensor_msgs::image_encodings::MONO8;
+	depth_img->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
 	depth_img->is_bigendian = 0;
 
-	int step = sizeof(unsigned char) * depth_img->width;
+	int step = sizeof(unsigned short) * depth_img->width;
 	int size = step * depth_img->height;
 	depth_img->step = step;
 	depth_img->data.resize(size);
@@ -463,7 +465,7 @@ processRGBD()
 
     USE_TIMES_START( process_start );
 
-	cv::Mat depth_frame(depth_stream.height, depth_stream.width, CV_8UC1, depth_frame_buffer);
+	cv::Mat depth_frame(depth_stream.height, depth_stream.width, CV_16UC1, depth_frame_buffer_mm);
 
 #ifdef V4L2_PIX_FMT_INZI
 	cv::Mat ir_frame(depth_stream.height, depth_stream.width, CV_8UC1, ir_frame_buffer);
@@ -532,8 +534,9 @@ processRGBD()
     		unsigned short depth_raw = *((unsigned short*)(depth_stream.fillbuf) + i);
 			depth = (float)depth_raw / depth_unit;
 #endif
-
-        depth_frame_buffer[i] = depth ? 255 * (sensor_depth_max - depth) / sensor_depth_max : 0;
+	depth_frame_buffer_mm[i] = depth_raw;
+        depth_frame_buffer_m[i] = depth;
+	depth_frame_buffer[i] = depth ? 255 * (sensor_depth_max - depth) / sensor_depth_max : 0;
 
         float uvx = -1.0f;
         float uvy = -1.0f;
@@ -976,6 +979,8 @@ int main(int argc, char* argv[])
     rgb_frame_buffer = new unsigned char[rgb_stream.width * rgb_stream.height * 2];
 #endif
     depth_frame_buffer = new unsigned char[depth_stream.width * depth_stream.height];
+    depth_frame_buffer_mm = new unsigned short[depth_stream.width * depth_stream.height];
+    depth_frame_buffer_m = new float[depth_stream.width * depth_stream.height];
 
 #ifdef V4L2_PIX_FMT_INZI
     ir_frame_buffer = new unsigned char[depth_stream.width * depth_stream.height];
@@ -1026,6 +1031,8 @@ int main(int argc, char* argv[])
 
     delete[] rgb_frame_buffer;
     delete[] depth_frame_buffer;
+    delete[] depth_frame_buffer_mm;
+    delete[] depth_frame_buffer_m;
 #ifdef V4L2_PIX_FMT_INZI
     delete[] ir_frame_buffer;
 #endif

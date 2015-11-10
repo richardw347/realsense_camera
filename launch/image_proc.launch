@@ -1,0 +1,22 @@
+<launch>
+        <node ns="camera" pkg="nodelet" type="nodelet" args="manager" name="realsense_camera_manager" output="screen"/> 
+	<node ns="/camera/rgb" name="image_proc" type="image_proc" pkg="image_proc" />
+
+	<include ns="camera" file="$(find rgbd_launch)/launch/includes/depth.launch.xml">
+		<arg name="manager" value="realsense_camera_manager" />
+		<arg name="respawn" value="true" />
+		<arg name="depth"   value="depth" />
+		<arg name="points_xyz"  value="false" />
+	</include>
+
+	<include ns="camera" file="$(find rgbd_launch)/launch/includes/depth_registered.launch.xml">
+		<arg name="manager"                  value="realsense_camera_manager" />
+		<arg name="rgb"                      value="rgb" />
+		<arg name="depth"                    value="depth" />
+		<arg name="depth_registered"         value="depth_registered" />
+		<arg name="respawn"                  value="true" />
+		<arg name="sw_registered_processing" value="true" />
+		<arg name="hw_registered_processing" value="false" />
+	</include>
+
+</launch>
