@@ -2,7 +2,14 @@
         <node ns="camera" pkg="nodelet" type="nodelet" args="manager" name="realsense_camera_manager" output="screen"/> 
 	<node ns="/camera/rgb" name="image_proc" type="image_proc" pkg="image_proc" />
 
-	<include ns="camera" file="$(find rgbd_launch)/launch/includes/depth.launch.xml">
+	<include file="$(find rgbd_launch)/launch/includes/rgb.launch.xml">
+		<arg name="manager" value="realsense_camera_manager" />
+		<arg name="respawn" value="true" />
+		<arg name="rgb"     value="rgb" />
+		<arg name="debayer_processing" value="false" />
+	</include>
+
+	<include ns="camera" file="$(find realsense_camera)/launch/depth_proc.launch">
 		<arg name="manager" value="realsense_camera_manager" />
 		<arg name="respawn" value="true" />
 		<arg name="depth"   value="depth" />

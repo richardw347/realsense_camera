@@ -291,10 +291,10 @@ pubRealSenseDepthImageMsg(cv::Mat& depth_mat)
 	depth_img->width = depth_mat.cols;
 	depth_img->height = depth_mat.rows;
 
-	depth_img->encoding = sensor_msgs::image_encodings::TYPE_16UC1;
+	depth_img->encoding = sensor_msgs::image_encodings::TYPE_32FC1;
 	depth_img->is_bigendian = 0;
 
-	int step = sizeof(unsigned short) * depth_img->width;
+	int step = sizeof(float) * depth_img->width;
 	int size = step * depth_img->height;
 	depth_img->step = step;
 	depth_img->data.resize(size);
@@ -465,7 +465,7 @@ processRGBD()
 
     USE_TIMES_START( process_start );
 
-	cv::Mat depth_frame(depth_stream.height, depth_stream.width, CV_16UC1, depth_frame_buffer_mm);
+	cv::Mat depth_frame(depth_stream.height, depth_stream.width, CV_32FC1, depth_frame_buffer_m);
 
 #ifdef V4L2_PIX_FMT_INZI
 	cv::Mat ir_frame(depth_stream.height, depth_stream.width, CV_8UC1, ir_frame_buffer);
@@ -531,11 +531,11 @@ processRGBD()
 			unsigned short depth_raw = *depth_ptr;
 			depth = (float)depth_raw / depth_unit;
 #else
-    		unsigned short depth_raw = *((unsigned short*)(depth_stream.fillbuf) + i);
+	   		unsigned short depth_raw = *((unsigned short*)(depth_stream.fillbuf) + i);
 			depth = (float)depth_raw / depth_unit;
 #endif
-	depth_frame_buffer_mm[i] = depth_raw;
-        depth_frame_buffer_m[i] = depth;
+	depth_frame_buffer_m[i] = depth * depth_scale;
+	depth_frame_buffer_mm[i] = depth_raw / depth_unit;
 	depth_frame_buffer[i] = depth ? 255 * (sensor_depth_max - depth) / sensor_depth_max : 0;
 
         float uvx = -1.0f;
